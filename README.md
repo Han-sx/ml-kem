@@ -1,6 +1,8 @@
 > [!CAUTION]
 > This ML-KEM implementation is conformant with ML-KEM standard https://doi.org/10.6028/NIST.FIPS.203 and I also *try* to make it timing leakage free, but be informed that this implementation is not *yet* audited. **If you consider using it in production, please be careful !**
 
+>**This version adds AES algorithm**
+
 # ML-KEM (formerly known as Kyber)
 Module-Lattice -based Key Encapsulation Mechanism Standard by NIST i.e. FIPS 203.
 
