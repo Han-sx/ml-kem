@@ -7,7 +7,7 @@ help:
 	   grep -E '^[a-zA-Z_-]+:.*?## .*$$' $${file} | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}';\
 	done
 
-CXX ?= clang++
+CXX ?= clang++ 
 CXX_FLAGS := -std=c++20
 WARN_FLAGS := -Wall -Wextra -Wpedantic
 DEBUG_FLAGS := -O1 -g
@@ -19,6 +19,7 @@ SHA3_INC_DIR := ./sha3/include
 SUBTLE_INC_DIR := ./subtle/include
 RANDOMSHAKE_INC_DIR := ./RandomShake/include
 DEP_IFLAGS := -I $(SHA3_INC_DIR) -I $(SUBTLE_INC_DIR) -I $(RANDOMSHAKE_INC_DIR)
+CRYPTO_FLAGS := -lcryptopp
 
 SRC_DIR := include
 ML_KEM_SOURCES := $(shell find $(SRC_DIR) -name '*.hpp')

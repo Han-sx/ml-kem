@@ -2,9 +2,14 @@
 #include "randomshake/randomshake.hpp"
 #include <algorithm>
 #include <cassert>
+#include <cryptopp/aes.h>
+#include <cryptopp/filters.h>
+#include <cryptopp/hex.h>
+#include <cryptopp/modes.h>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+#include <string>
 
 // Given a bytearray of length N, this function converts it to human readable hex formatted string of length 2*N | N >= 0.
 static inline std::string
@@ -18,6 +23,52 @@ to_hex(std::span<const uint8_t> bytes)
   }
 
   return ss.str();
+}
+
+// Convert hex string to byte array
+void
+hexToBytes(const std::string& hex, CryptoPP::byte* bytes)
+{
+  CryptoPP::HexDecoder decoder;
+  decoder.Put((const CryptoPP::byte*)hex.data(), hex.size());
+  decoder.MessageEnd();
+
+  CryptoPP::word64 size = decoder.MaxRetrievable();
+  if (size && size <= CryptoPP::AES::DEFAULT_KEYLENGTH) {
+    decoder.Get(bytes, size);
+  }
+}
+
+// AES encryption function
+std::string
+aes_encrypt(const std::string& plaintext, const CryptoPP::byte* key, const CryptoPP::byte* iv)
+{
+  std::string ciphertext;
+
+  CryptoPP::CBC_Mode<CryptoPP::AES>::Encryption encryption;
+  encryption.SetKeyWithIV(key, CryptoPP::AES::DEFAULT_KEYLENGTH, iv);
+
+  CryptoPP::StreamTransformationFilter stfEncryptor(encryption, new CryptoPP::StringSink(ciphertext));
+  stfEncryptor.Put(reinterpret_cast<const CryptoPP::byte*>(plaintext.data()), plaintext.size());
+  stfEncryptor.MessageEnd();
+
+  return ciphertext;
+}
+
+// AES decryption function
+std::string
+aes_decrypt(const std::string& ciphertext, const CryptoPP::byte* key, const CryptoPP::byte* iv)
+{
+  std::string decryptedtext;
+
+  CryptoPP::CBC_Mode<CryptoPP::AES>::Decryption decryption;
+  decryption.SetKeyWithIV(key, CryptoPP::AES::DEFAULT_KEYLENGTH, iv);
+
+  CryptoPP::StreamTransformationFilter stfDecryptor(decryption, new CryptoPP::StringSink(decryptedtext));
+  stfDecryptor.Put(reinterpret_cast<const CryptoPP::byte*>(ciphertext.data()), ciphertext.size());
+  stfDecryptor.MessageEnd();
+
+  return decryptedtext;
 }
 
 // Compile it with
@@ -81,6 +132,36 @@ main()
   std::cout << "Encapsulated ? : " << std::boolalpha << is_encapsulated << "\n";
   std::cout << "Cipher         : " << to_hex(cipher_span) << "\n";
   std::cout << "Shared secret  : " << to_hex(sender_key_span) << "\n";
+
+  // Added AES algorithm
+
+  // Plaintext to be encrypted
+  std::string plaintext = "Power consumption side test data.";
+
+  // Generate AES key and initialization vector (IV) 256/128
+  CryptoPP::byte key[CryptoPP::AES::DEFAULT_KEYLENGTH];
+  CryptoPP::byte iv[CryptoPP::AES::BLOCKSIZE];
+
+  // Convert hex key to byte array
+  hexToBytes(to_hex(sender_key_span), key);
+
+  // Here, IV is initialized to 0. In actual applications, a secure random number generator should be used.
+  memset(iv, 0x00, CryptoPP::AES::BLOCKSIZE);
+
+  // Encrypted Plaintext
+  std::string ciphertext = aes_encrypt(plaintext, key, iv);
+
+  // Decrypting ciphertext
+  std::string decryptedtext = aes_decrypt(ciphertext, key, iv);
+
+  // Output
+  std::cout << "Plaintext: " << plaintext << std::endl;
+  std::cout << "Ciphertext (hex): ";
+  for (unsigned char c : ciphertext) {
+    printf("%02x", c);
+  }
+  std::cout << std::endl;
+  std::cout << "Decrypted text: " << decryptedtext << std::endl;
 
   return EXIT_SUCCESS;
 }
