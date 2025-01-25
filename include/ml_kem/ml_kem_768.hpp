@@ -48,17 +48,16 @@ keygen(std::span<const uint8_t, SEED_D_BYTE_LEN> d,
 [[nodiscard("If public key is malformed, encapsulation fails")]] constexpr bool
 encapsulate(std::span<const uint8_t, SEED_M_BYTE_LEN> m,
             std::span<const uint8_t, PKEY_BYTE_LEN> pubkey,
-            std::span<uint8_t, CIPHER_TEXT_BYTE_LEN> cipher,
-            std::span<uint8_t, SHARED_SECRET_BYTE_LEN> shared_secret)
+            std::span<uint8_t, CIPHER_TEXT_BYTE_LEN> cipher)
 {
-  return ml_kem::encapsulate<k, η1, η2, du, dv>(m, pubkey, cipher, shared_secret);
+  return ml_kem::encapsulate<k, η1, η2, du, dv>(m, pubkey, cipher);
 }
 
 // Given a ML-KEM-768 secret key and a cipher text, this routine computes a fixed size shared secret.
 constexpr void
-decapsulate(std::span<const uint8_t, SKEY_BYTE_LEN> seckey, std::span<const uint8_t, CIPHER_TEXT_BYTE_LEN> cipher, std::span<uint8_t, SHARED_SECRET_BYTE_LEN> shared_secret)
+decapsulate(std::span<const uint8_t, SKEY_BYTE_LEN> seckey, std::span<const uint8_t, CIPHER_TEXT_BYTE_LEN> cipher,std::span<uint8_t,768>decrypted_span)
 {
-  ml_kem::decapsulate<k, η1, η2, du, dv>(seckey, cipher, shared_secret);
+  ml_kem::decapsulate<k, η1, η2, du, dv>(seckey, cipher,decrypted_span);
 }
 
 }

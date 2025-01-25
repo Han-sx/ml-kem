@@ -5,6 +5,8 @@
 #include "sha3/sha3_512.hpp"
 #include "sha3/shake256.hpp"
 #include <algorithm>
+#include <iomanip>
+#include <iostream>
 
 // Key Encapsulation Mechanism
 namespace ml_kem {
@@ -53,8 +55,7 @@ template<size_t k, size_t eta1, size_t eta2, size_t du, size_t dv>
 [[nodiscard("Use result, it might fail because of malformed input public key")]] constexpr bool
 encapsulate(std::span<const uint8_t, 32> m,
             std::span<const uint8_t, ml_kem_utils::get_kem_public_key_len(k)> pubkey,
-            std::span<uint8_t, ml_kem_utils::get_kem_cipher_text_len(k, du, dv)> cipher,
-            std::span<uint8_t, 32> shared_secret)
+            std::span<uint8_t, ml_kem_utils::get_kem_cipher_text_len(k, du, dv)> cipher)
   requires(ml_kem_params::check_encap_params(k, eta1, eta2, du, dv))
 {
   std::array<uint8_t, m.size() + sha3_256::DIGEST_LEN> g_in{};
@@ -65,7 +66,7 @@ encapsulate(std::span<const uint8_t, 32> m,
   auto g_in_span1 = g_in_span.template last<sha3_256::DIGEST_LEN>();
 
   auto g_out_span = std::span(g_out);
-  auto g_out_span0 = g_out_span.template first<shared_secret.size()>();
+  auto g_out_span0 = g_out_span.template first<32>();
   auto g_out_span1 = g_out_span.template last<g_out_span.size() - g_out_span0.size()>();
 
   std::copy(m.begin(), m.end(), g_in_span0.begin());
@@ -85,8 +86,6 @@ encapsulate(std::span<const uint8_t, 32> m,
     // Got an invalid public key
     return has_mod_check_passed;
   }
-
-  std::copy(g_out_span0.begin(), g_out_span0.end(), shared_secret.begin());
   return true;
 }
 
@@ -97,41 +96,81 @@ encapsulate(std::span<const uint8_t, 32> m,
 // used for encrypting communication between two participating parties, using fast symmetric key algorithms.
 //
 // See algorithm 18 defined in ML-KEM specification https://doi.org/10.6028/NIST.FIPS.203.
+// 输出 g_in_span0 的内容，按十六进制格式打印
+void
+print_g_in_span0(const std::span<const uint8_t>& g_in_span0)
+{
+  std::cout << "g_in_span0 content: ";
+  std::string output; // 用于累积所有打印的字符
+  for (const auto& byte : g_in_span0) {
+    // 如果是可打印字符，则加入输出字符串
+    if (std::isprint(byte)) {
+      output += static_cast<char>(byte);
+    } else {
+      break; // 遇到非打印字符时停止输出
+    }
+  }
+  std::cout << output << "\n"; // 输出完整的字符串
+}
+void
+update_decrypted_span(std::span<uint8_t, 768> decrypted_span, const std::span<const uint8_t>& g_in_m_span0)
+{
+  // 计算当前decrypted_span中已经存在的字节数
+  size_t decrypted_size = 0;
+  for (const auto& byte : decrypted_span) {
+    if (byte != 0) { // 假设0代表空的地方，其他值代表已填充的内容
+      decrypted_size++;
+    }
+  }
+
+  // 将g_in_m_span0中的数据追加到decrypted_span中
+  size_t remaining_space = decrypted_span.size() - decrypted_size;
+  size_t copy_size = std::min(g_in_m_span0.size(), remaining_space);
+
+  // 使用std::copy从decrypted_span的正确位置开始填充
+  std::copy(g_in_m_span0.begin(), g_in_m_span0.begin() + copy_size, decrypted_span.begin() + decrypted_size);
+
+  // 如果你需要输出查看，可以取消注释以下代码
+  // print_g_in_span0(decrypted_span);  // 打印已填充的decrypted_span
+}
+
 template<size_t k, size_t eta1, size_t eta2, size_t du, size_t dv>
 constexpr void
 decapsulate(std::span<const uint8_t, ml_kem_utils::get_kem_secret_key_len(k)> seckey,
             std::span<const uint8_t, ml_kem_utils::get_kem_cipher_text_len(k, du, dv)> cipher,
-            std::span<uint8_t, 32> shared_secret)
+            std::span<uint8_t, 768> decrypted_span)
   requires(ml_kem_params::check_decap_params(k, eta1, eta2, du, dv))
 {
   constexpr size_t sklen = k * 12 * 32;
   constexpr size_t pklen = k * 12 * 32 + 32;
-  constexpr size_t ctlen = cipher.size();
+  // constexpr size_t ctlen = cipher.size();
 
   constexpr size_t skoff0 = sklen;
   constexpr size_t skoff1 = skoff0 + pklen;
   constexpr size_t skoff2 = skoff1 + 32;
 
   auto pke_sk = seckey.template subspan<0, skoff0>();
-  auto pubkey = seckey.template subspan<skoff0, skoff1 - skoff0>();
+  // auto pubkey = seckey.template subspan<skoff0, skoff1 - skoff0>();
   auto h = seckey.template subspan<skoff1, skoff2 - skoff1>();
-  auto z = seckey.template subspan<skoff2, seckey.size() - skoff2>();
+  // auto z = seckey.template subspan<skoff2, seckey.size() - skoff2>();
 
   std::array<uint8_t, 32 + h.size()> g_in{};
-  std::array<uint8_t, shared_secret.size() + 32> g_out{};
-  std::array<uint8_t, shared_secret.size()> j_out{};
-  std::array<uint8_t, cipher.size()> c_prime{};
+  // std::array<uint8_t, shared_secret.size() + 32> g_out{};
+  // std::array<uint8_t, shared_secret.size()> j_out{};
+  // std::array<uint8_t, cipher.size()> c_prime{};
 
   auto g_in_span = std::span(g_in);
-  auto g_in_span0 = g_in_span.template first<32>();
-  auto g_in_span1 = g_in_span.template last<h.size()>();
+  auto g_in_m_span0 = g_in_span.template first<32>();
+  // auto g_in_span1 = g_in_span.template last<h.size()>();
 
-  auto g_out_span = std::span(g_out);
-  auto g_out_span0 = g_out_span.template first<shared_secret.size()>();
-  auto g_out_span1 = g_out_span.template last<32>();
+  // auto g_out_span = std::span(g_out);
+  // auto g_out_span0 = g_out_span.template first<shared_secret.size()>();
+  // auto g_out_span1 = g_out_span.template last<32>();
 
-  k_pke::decrypt<k, du, dv>(pke_sk, cipher, g_in_span0);
-  std::copy(h.begin(), h.end(), g_in_span1.begin());
+  k_pke::decrypt<k, du, dv>(pke_sk, cipher, g_in_m_span0);
+  update_decrypted_span(decrypted_span, g_in_m_span0);
+  // rint_g_in_span0(decrypted_span); // 打印 g_in_span0
+  /*std::copy(h.begin(), h.end(), g_in_span1.begin());
 
   sha3_512::sha3_512_t h512{};
   h512.absorb(g_in_span);
@@ -150,7 +189,7 @@ decapsulate(std::span<const uint8_t, ml_kem_utils::get_kem_secret_key_len(k)> se
   // line 9-12 of algorithm 17, in constant-time
   using kdf_t = std::span<const uint8_t, shared_secret.size()>;
   const uint32_t cond = ml_kem_utils::ct_memcmp(cipher, std::span<const uint8_t, ctlen>(c_prime));
-  ml_kem_utils::ct_cond_memcpy(cond, shared_secret, kdf_t(g_out_span0), kdf_t(z));
+  ml_kem_utils::ct_cond_memcpy(cond, shared_secret, kdf_t(g_out_span0), kdf_t(z));*/
 }
 
 }
