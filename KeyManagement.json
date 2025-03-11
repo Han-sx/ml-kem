@@ -1,0 +1,236 @@
+[
+  {
+    "inputs": [],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "allRingPublicKeyIds",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "allUserAddresses",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getAllRingPublicKeyInfos",
+    "outputs": [
+      {
+        "internalType": "uint256[]",
+        "name": "",
+        "type": "uint256[]"
+      },
+      {
+        "internalType": "uint256[][]",
+        "name": "",
+        "type": "uint256[][]"
+      },
+      {
+        "internalType": "uint256[][]",
+        "name": "",
+        "type": "uint256[][]"
+      },
+      {
+        "internalType": "string[]",
+        "name": "",
+        "type": "string[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getAllUserPublicKeys",
+    "outputs": [
+      {
+        "internalType": "address[]",
+        "name": "",
+        "type": "address[]"
+      },
+      {
+        "internalType": "bytes[]",
+        "name": "",
+        "type": "bytes[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_publicKeyId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getRingPublicKeyInfo",
+    "outputs": [
+      {
+        "internalType": "uint256[]",
+        "name": "",
+        "type": "uint256[]"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "",
+        "type": "uint256[]"
+      },
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_userAddress",
+        "type": "address"
+      }
+    ],
+    "name": "getUserPublicKey",
+    "outputs": [
+      {
+        "internalType": "bytes",
+        "name": "",
+        "type": "bytes"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "owner",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "ringPublicKeyInfo",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "description",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_publicKeyId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "_xCoordinates",
+        "type": "uint256[]"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "_yCoordinates",
+        "type": "uint256[]"
+      },
+      {
+        "internalType": "string",
+        "name": "_description",
+        "type": "string"
+      }
+    ],
+    "name": "storeRingPublicKey",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_userAddress",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes",
+        "name": "_publicKey",
+        "type": "bytes"
+      }
+    ],
+    "name": "storeUserPublicKey",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "userPublicKey",
+    "outputs": [
+      {
+        "internalType": "bytes",
+        "name": "",
+        "type": "bytes"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]
