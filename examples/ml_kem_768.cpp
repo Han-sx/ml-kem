@@ -10,6 +10,10 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <fstream>
+#include <cstdlib>
+#include <cstdio>
+#include <cstring>
 
 // Given a bytearray of length N, this function converts it to human readable hex formatted string of length 2*N | N >= 0.
 static inline std::string
@@ -135,8 +139,19 @@ main()
 
   // Added AES algorithm
 
-  // Plaintext to be encrypted
-  std::string plaintext = "Power consumption side test data.";
+  // // Plaintext to be encrypted
+  // std::string plaintext = "Power consumption side test data.";
+
+  // Read file
+  std::ifstream file("data_file.dat", std::ios::binary);
+  if (!file) {
+      std::cerr << "无法打开文件" << std::endl;
+      return EXIT_FAILURE;
+  }
+
+  // Read files to plaintext
+  std::string plaintext((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+  file.close();
 
   // Generate AES key and initialization vector (IV) 256/128
   CryptoPP::byte key[CryptoPP::AES::DEFAULT_KEYLENGTH];
@@ -151,8 +166,75 @@ main()
   // Encrypted Plaintext
   std::string ciphertext = aes_encrypt(plaintext, key, iv);
 
+  // Convert ciphertext to hex
+  std::string ciphertextHex;
+  CryptoPP::StringSource(ciphertext, true,
+      new CryptoPP::HexEncoder(
+          new CryptoPP::StringSink(ciphertextHex)
+      )
+  );
+
+  // Save ciphertext hex to file
+  std::ofstream outputFile("ciphertext.txt");
+  if (outputFile.is_open()) {
+      outputFile << ciphertextHex;
+      outputFile.close();
+      std::cout << "Ciphertext (hex) has been saved to ciphertext.txt" << std::endl;
+  } else {
+      std::cerr << "Unable to open file for writing ciphertext." << std::endl;
+      return EXIT_FAILURE;
+  }
+
+  // 定义要执行的 Python 命令
+  const char* command = "python3 Encrypt_data.py";
+
+  // 使用 popen 打开一个管道来执行命令
+  FILE* pipe = popen(command, "r");
+  if (!pipe) {
+      std::cerr << "无法执行命令" << std::endl;
+      return -1;
+  }
+
+  // 用于存储命令输出的缓冲区
+  char buffer[128];
+  std::string result;
+
+  // 从管道中读取命令输出
+  while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+      result += buffer;
+  }
+
+  // 关闭管道
+  int returnCode = pclose(pipe);
+
+  // 检查命令执行结果
+  if (returnCode == 0) {
+      std::cout << "Python 脚本执行成功，输出结果如下：" << std::endl;
+      std::cout << result << std::endl;
+  } else {
+      std::cerr << "Python 脚本执行失败，返回码: " << returnCode << std::endl;
+  }
+
+  // Read ciphertext hex from file
+  std::ifstream readFile("ciphertext.txt");
+  if (!readFile) {
+      std::cerr << "无法打开 ciphertext.txt 文件" << std::endl;
+      return EXIT_FAILURE;
+  }
+  std::string readCiphertextHex;
+  readFile >> readCiphertextHex;
+  readFile.close();
+
+  // Convert hex to bytes
+  std::string readCiphertext;
+  CryptoPP::StringSource(readCiphertextHex, true,
+      new CryptoPP::HexDecoder(
+          new CryptoPP::StringSink(readCiphertext)
+      )
+  );
+
   // Decrypting ciphertext
-  std::string decryptedtext = aes_decrypt(ciphertext, key, iv);
+  std::string decryptedtext = aes_decrypt(readCiphertext, key, iv);
 
   // Output
   std::cout << "Plaintext: " << plaintext << std::endl;
